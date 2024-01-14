@@ -4,4 +4,5 @@ The overal purpose of this project is to get familiar using GO to build an appli
 - Go
 ## Ongoing plans:
 - Connect to a mongodb database
+- Dockerize
 
