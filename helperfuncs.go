@@ -18,6 +18,8 @@ func jsonResponse(w http.ResponseWriter, code int, payload interface{}){
 	w.WriteHeader(code)
 	w.Write(data)
 }
+
+
 func errorReponse(w http.ResponseWriter, code int, message string){
 	if code > 499 {
 		log.Println("Responding with 5XX error: ", message)
