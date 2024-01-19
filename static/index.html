@@ -4,17 +4,54 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>GO/ MongoDB</title>
+        <title>Hm</title>
     </head>
 
     <body>
-        <h1>Hey there</h1>
-        <form action="" method="post">
-            <label for="title">title</label>
+        <h1>CRUD</h1>
+        <h3>Create 1</h3>
+        <form action="v1/item" method="post" id="createItem">
+            <label for="title">Title: </label>
             <input type="text" name="title" id="title" required>
-            <label for="completed">true or false</label>
+            <label for="completed">Completed: </label>
             <input type="text" name="completed" id="completed" required>
+            <button type="submit">Create Item</button>
         </form>
+        <h3>Update</h3>
+        <form method="get">
+            <!-- <label for="title">Title: </label>
+            <input type="text" name="title">
+            <label for="completed">Completed: </label>
+            <input type="text" name="completed"> -->
+            <button type="submit" onclick=gatherItems()>Gather All</button>
+        </form>
+
+        <h1 style="margin: auto;
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        color: cadetblue;">Flashcards</h1>
+        <section style="
+        display: flex;
+        flex-direction: column;
+        width: 400px;
+        height: 250px;
+        margin: auto;
+        background-color:burlywood;
+        border:dashed 8px cadetblue;
+        padding: 10px 20px;
+        ">
+            <p id="title" style="font-size: 20px;">Title: {{.Title}}</p>
+            <p id="completed" style="font-size: 20px;">Completed: {{.Completed}}</p>
+
+        </section>
+        <script>
+            function gatherItems() {
+                // window.event.preventDefault()
+                fetch("v1/items")
+                alert("Got em")
+            }
+        </script>
     </body>
 
 </html>

@@ -16,38 +16,34 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-//Model
+// Model
 type TempModel struct {
-	ID primitive.ObjectID `bson:"_id,omitempty"` 
+	ID primitive.ObjectID `bson:"_id,omitempty"`
 	// ID primitive.ObjectID `json:"_id,omitempty" bson:"_id, omitempty"`
-	Title string `json:"title,omitempty"`
-	Completed bool `json:"completed,omitempty"`
+	Title     string `json:"title,omitempty"`
+	Completed string `json:"completed,omitempty"`
 }
 
-	//Stating collection type
+// Stating collection type
 var collection *mongo.Collection
 
-	//Connecting to MongoClient
+// Connecting to MongoClient
 func init() {
 	godotenv.Load(".env")
 	URI := os.Getenv("DATABASE_URI")
 	DATABASE := os.Getenv("DATABASE")
 	COLLECTION := os.Getenv("COLLECTION")
-
 	clientOptions := options.Client().ApplyURI(URI)
 
-		//Background()
-		//TODO for when your not sure
+	//TODO() for when your not sure
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Println("Error occured: ", err)
-		log.Fatal(err) 
+		log.Println("Error Occurred When Connecting MongoDB Client =>>>> ", err)
+		log.Fatal(err)
 	}
-
 	fmt.Println("<<<<Connected!>>>>")
-
 	collection = client.Database(DATABASE).Collection(COLLECTION)
 	fmt.Println("<<<<Connection instance is ready>>>>")
 
@@ -56,37 +52,36 @@ func init() {
 	// if err != nil { return  }
 	// id := res.InsertedID
 	// fmt.Printf("idk=>>> %v", id)
-	
-}
-//will put helpers in seperate file
 
-	//Lowercase: it's a helper method and we are not exporting it
-func insertOneItem(item TempModel){
+}
+
+// TODO: Move helpers to separate file
+// Lowercase: it's a helper method and we are not exporting it
+func createOneItem(item TempModel) {
 	res, err := collection.InsertOne(context.Background(), item)
-	if err != nil{
-		fmt.Println("Error Occurred in INSERT ONE ITEM section")
+	if err != nil {
+		fmt.Println("Error Occurred When Adding Item =>>>>", err)
 		log.Fatal(err)
 	}
-	fmt.Println("Item added with ID =>>>> ", res.InsertedID)
-	// id := res.InsertedID
-	// fmt.Printf("idk=>>> %v", id)
+	fmt.Println("\nItem Successfully Added With ID =>>>> ", res.InsertedID)
 }
-func updateOneItem(itemId string){
+
+func updateOneItem(itemId string) {
 	id, err := primitive.ObjectIDFromHex(itemId)
-	if err != nil{
-		fmt.Println("Error Occurred in UPDATE ONE ITEM Id section =>>>> ", err)
+	if err != nil {
+		fmt.Println("Error Occurred When Updating Item =>>>> ", err)
 		log.Fatal(err)
 	}
 	filter := bson.M{"_id": id}
 	update := bson.M{"$set": bson.M{"completed": true}}
 
-	res, err := collection.UpdateOne(context.Background(), filter,update)
+	res, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		fmt.Println("Error occurred after UPDATE COLLECTION")
+		fmt.Println("Error Occurred Trying To Add Item To Collection")
 		log.Fatal(err)
 	}
-	fmt.Println("Update Completed", res)
-	fmt.Println("Modified cOunt", res.ModifiedCount)
+	fmt.Println("\nUpdate Completed! =>>>>", res)
+	fmt.Println("\nres.ModifiedCount =>>>>", res.ModifiedCount)
 }
 
 // func deleteOneItem(itemId string ){
@@ -114,97 +109,87 @@ func updateOneItem(itemId string){
 // 	fmt.Println("DELETE ALL Completed", res)
 // 	fmt.Println("Modified DELETE COUNT", res.DeletedCount)
 // }
-func getAllItems() []bson.D {
-		//Cursor are pointers to the documents in the collection
-	cursor, err := collection.Find(context.Background(), bson.D{{}})
 
+func getAllItems() ([]bson.M, int) {
+	//Cursor are pointers to the documents in the collection
+	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
-		fmt.Println("Error occurred while gathering FIND ALL DATABASE =>>>> ", err)
+		fmt.Println("Error Occurred When Gathering All Items =>>>> ", err)
 		log.Fatal(err)
 	}
-	defer cursor.Close(context.Background())
+	defer func() {
+		cursor.Close(context.Background())
+		fmt.Println("<<<<Cursor is closed>>>>")
+	}()
 
-	var items []bson.D
-	// var items []primitive.D
-		//Next allows us to loop through the cursor, if there is a next value
-		//"While true"
+	var items []bson.M
+	var amount int
+	//Next allows us to loop through the cursor, if there is a next value
+	//"While true"
 	for cursor.Next(context.Background()) {
-		var item bson.D
+		var item bson.M
 		err := cursor.Decode(&item)
 		if err != nil {
-			fmt.Println("Error occurred after FIND ALL DATABASE =>>>> ", err)
-			log.Fatal(err) 
+			fmt.Println("Error Occurred When Gathering All Items =>>>> ", err)
+			log.Fatal(err)
 		}
-		fmt.Println("Results =>>>> ", item)
+		fmt.Printf("Results =>>>> %v\n", item)
 		items = append(items, item)
+		amount = amount + 1
 	}
 	if err != nil {
 		fmt.Println("Error occurred after loop FIND ALL DATABASE =>>>> ", err)
 		log.Fatal(err)
 	}
-	return items
-
+	fmt.Printf("ITEMS, %v\n", items)
+	return items, amount
 }
 
-
-	//Exported functions
-func GetAllItems(w http.ResponseWriter, r *http.Request){
+// Exported functions
+func GetAllItems(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	allItems := getAllItems()
+	allItems, amount := getAllItems()
+	fmt.Println("Everything:", allItems)
+	fmt.Println("Amount:", amount)
 	json.NewEncoder(w).Encode(allItems)
 }
 
-func CreateItem(w http.ResponseWriter, r *http.Request){
+func CreateOneItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Allow-Control-Allow-Methods", "POST")
 	var item TempModel
+	// idk := make([]byte, 10000)
+	// boo, _ := r.Body.Read(idk)
+	// fmt.Printf("BODY: %v", string(idk[:boo]))
+
+	if err := r.ParseForm(); err != nil {
+		fmt.Println("Error while parsing Create Item form")
+		log.Fatal(err)
+	}
+	title := r.FormValue("title")
+	completed := r.FormValue("completed")
+	item = TempModel{
+		Title:     title,
+		Completed: completed,
+	}
 	json.NewDecoder(r.Body).Decode(&item)
-	insertOneItem(item)
-	json.NewEncoder(w).Encode(item)
+
+	/*
+		Not needed for when parsing form, but when dealing with json, for ex. APIs
+		json.NewDecoder(r.Body).Decode(&item)
+		json.NewEncoder(w).Encode(item)
+	*/
+	createOneItem(item)
 }
 
-func UpdateCompleted(w http.ResponseWriter, r *http.Request){
+func UpdateOneItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Allow-Control-Allow-Methods", "POST")
-	if err := r.ParseForm(); err != nil{
-		fmt.Println("Error in Export Updating Function")
+	if err := r.ParseForm(); err != nil {
+		fmt.Println("Error Occurred when Parsing Update Form")
 		log.Fatal(err)
 	}
 	id := r.FormValue("id")
 	updateOneItem(id)
 	json.NewEncoder(w).Encode(id)
 }
-
-
-
-
-
-
-
-
-
-/*
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-	defer cancel()
-
-
-	clientOptions := options.Client().ApplyURI(URI)
-	client, err := mongo.Connect(ctx, clientOptions)
-	if err != nil {
-		panic(err)
-	}
-
-	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
-			log.Printf("Disconnect Error =>>>> %v", err)
-			return
-		}
-	}()
-
-
-	collection := client.Database("testing").Collection("numbers")
-	res, err := collection.InsertOne(context.Background(), bson.M{"hello": "world"})
-	if err != nil { return  }
-	id := res.InsertedID
-	fmt.Printf("idk=>>> %v", id)
-*/
