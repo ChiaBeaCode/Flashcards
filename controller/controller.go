@@ -20,8 +20,8 @@ import (
 type TempModel struct {
 	ID primitive.ObjectID `bson:"_id,omitempty"`
 	// ID primitive.ObjectID `json:"_id,omitempty" bson:"_id, omitempty"`
-	Title     string `json:"title,omitempty"`
-	Completed string `json:"completed,omitempty"`
+	Title      string `json:"title,omitempty"`
+	Definition string `json:"definition,omitempty"`
 }
 
 // Stating collection type
@@ -58,6 +58,7 @@ func init() {
 // TODO: Move helpers to separate file
 // Lowercase: it's a helper method and we are not exporting it
 func createOneItem(item TempModel) {
+	fmt.Println("2")
 	res, err := collection.InsertOne(context.Background(), item)
 	if err != nil {
 		fmt.Println("Error Occurred When Adding Item =>>>>", err)
@@ -73,7 +74,7 @@ func updateOneItem(itemId string) {
 		log.Fatal(err)
 	}
 	filter := bson.M{"_id": id}
-	update := bson.M{"$set": bson.M{"completed": true}}
+	update := bson.M{"$set": bson.M{"definition": true}}
 
 	res, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
@@ -97,7 +98,7 @@ func updateOneItem(itemId string) {
 // 		fmt.Println("Error occurred after DELETE COLLECTION")
 // 		log.Fatal(err)
 // 	}
-// 	fmt.Println("Delete Completed", res)
+// 	fmt.Println("Delete Definition", res)
 // 	fmt.Println("DElete modifed cOunt", res.DeletedCount)
 // }
 // func deleteAllItems(){
@@ -110,7 +111,7 @@ func updateOneItem(itemId string) {
 // 	fmt.Println("Modified DELETE COUNT", res.DeletedCount)
 // }
 
-func getAllItems() ([]bson.M, int) {
+func getAllItems() []bson.M {
 	//Cursor are pointers to the documents in the collection
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
@@ -123,7 +124,6 @@ func getAllItems() ([]bson.M, int) {
 	}()
 
 	var items []bson.M
-	var amount int
 	//Next allows us to loop through the cursor, if there is a next value
 	//"While true"
 	for cursor.Next(context.Background()) {
@@ -135,45 +135,42 @@ func getAllItems() ([]bson.M, int) {
 		}
 		fmt.Printf("Results =>>>> %v\n", item)
 		items = append(items, item)
-		amount = amount + 1
 	}
 	if err != nil {
 		fmt.Println("Error occurred after loop FIND ALL DATABASE =>>>> ", err)
 		log.Fatal(err)
 	}
 	fmt.Printf("ITEMS, %v\n", items)
-	return items, amount
+	return items
 }
 
 // Exported functions
 func GetAllItems(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	allItems, amount := getAllItems()
+	allItems := getAllItems()
 	fmt.Println("Everything:", allItems)
-	fmt.Println("Amount:", amount)
 	json.NewEncoder(w).Encode(allItems)
 }
 
 func CreateOneItem(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("1")
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Allow-Control-Allow-Methods", "POST")
 	var item TempModel
-	// idk := make([]byte, 10000)
-	// boo, _ := r.Body.Read(idk)
-	// fmt.Printf("BODY: %v", string(idk[:boo]))
-
-	if err := r.ParseForm(); err != nil {
-		fmt.Println("Error while parsing Create Item form")
-		log.Fatal(err)
-	}
-	title := r.FormValue("title")
-	completed := r.FormValue("completed")
-	item = TempModel{
-		Title:     title,
-		Completed: completed,
-	}
+	/*
+		<<<<If you are submitting data through form>>>>
+		if err := r.ParseForm(); err != nil {
+			fmt.Println("Error while parsing Create Item form")
+			log.Fatal(err)
+		}
+		title := r.FormValue("title")
+		definition := r.FormValue("definition")
+		item = TempModel{
+			Title:     title,
+			Definition: definition,
+		}
+	*/
 	json.NewDecoder(r.Body).Decode(&item)
-
 	/*
 		Not needed for when parsing form, but when dealing with json, for ex. APIs
 		json.NewDecoder(r.Body).Decode(&item)

@@ -18,6 +18,7 @@ type ClientStruct struct {
 }
 
 // Client returns a reference to a struct(binary slice, addresses, booleans, map[] and nil)
+
 func NewClientStruct(c *mongo.Client) *ClientStruct {
 	return &ClientStruct{
 		client: c,
@@ -51,7 +52,7 @@ func main() {
 	//Nesting routers in case of breaking changes, you havea handler in each path to take care of the action
 	//Full path == ..../v1/ready
 	v1Router := chi.NewRouter()
-	//HandleFunc matches any method, hence .Get instead
+	//<<<<HandleFunc matches any method, hence .Get instead>>>>
 	v1Router.Get("/ready", handlerServerReadiness)
 	v1Router.Get("/error", handlerError)
 
