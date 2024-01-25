@@ -32,8 +32,8 @@ func main() {
 		return
 	}
 
-	URI, found := os.LookupEnv("DATABASE_URI")
-	if !found || URI == "" {
+	DATABASE_URI, found := os.LookupEnv("DATABASE_URI")
+	if !found || DATABASE_URI == "" {
 		fmt.Println("URI Not Found/Or Is Empty")
 		return
 	}
@@ -52,13 +52,29 @@ func main() {
 	//Nesting routers in case of breaking changes, you havea handler in each path to take care of the action
 	//Full path == ..../v1/ready
 	v1Router := chi.NewRouter()
-	//<<<<HandleFunc matches any method, hence .Get instead>>>>
+	// <<<<HandleFunc matches any method, hence .Get instead>>>>
 	v1Router.Get("/ready", handlerServerReadiness)
 	v1Router.Get("/error", handlerError)
 
 	//<<<<CRUD Path Testing>>>>
-	v1Router.Post("/item", controller.CreateOneItem)
-	v1Router.Get("/items", controller.GetAllItems)
+	// Create card
+	// v1Router.Post("/card", controller.CreateOneCard)
+	v1Router.Post("/api/flashcards/new", controller.CreateOneCard)
+
+	// Grab all cards
+	// v1Router.Get("/cards", controller.GetAllCards)
+	v1Router.Get("/api/flashcards", controller.GetAllCards)
+
+	// // Find card
+	// // v1Router.Get("/cards", controller.FindCard)
+	// v1Router.Get("/api/flashcards/:id", controller.FindOneCard)
+
+	// Update card card/:id
+	v1Router.Put("/api/flashcards/:id", controller.UpdateOneCard)
+
+	// Delete card card/:id
+	// v1Router.Delete("/api/flashcards/:id", controller.DeleteOneCard)
+
 	//<<<<>>>>>
 	router.Mount("/v1", v1Router)
 	router.Handle("/", http.FileServer(http.Dir("static")))

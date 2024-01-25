@@ -1,102 +1,268 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        background-color: #c4d8c4;
+        font-family: "Courier New", Courier, monospace;
+        cursor: default;
+      }
+      .header {
+        border: 2px solid red;
+        text-align: center;
+        margin: auto auto 50px;
+      }
+      .mainSection {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        /* border: 2px solid purple; */
+        padding: 0px 50px;
+      }
+      #formSection {
+        max-width: 30%;
+      }
+      #flashcardAddedStatus {
+        background-color: cadetblue;
+        max-width: 272px;
+        padding: 8px;
+        margin: 0px;
+      }
+      #createFlashcardForm {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border: 4px solid cadetblue;
+        padding: 15px;
+        max-width: 272px;
+      }
+      label {
+        font-size: 18px;
+        font-weight: 800;
+        width: max-content;
+      }
+      input {
+        border: 2px solid grey;
+        border-radius: 10px;
+        height: 20px;
+        margin: 8px 0px;
+        padding: 2px 12px;
+      }
+      #submitButton,
+      #addNewCard {
+        width: 120px;
+        padding: 4px;
+        margin: 8px auto;
+        background: cadetblue;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      #addNewCard {
+        visibility: hidden;
+      }
+      #flashcardSection {
+        display: flex;
+        flex-wrap: wrap;
+        /* border: 2px solid blue; */
+        margin: 0px auto;
+        max-width: 70%;
+      }
+      .flashcard {
+        display: flex;
+        flex-wrap: wrap;
+        flex-direction: column;
+        width: 250px;
+        height: 150px;
+        margin: 10px auto;
+        background-color: burlywood;
+        border: dashed 2px cadetblue;
+      }
+      .flashcard.active .flashcardDefinition,
+      .flashcard.active .flashcardTitle {
+        transform: rotateX(360deg);
+        transition-duration: 1s;
+        padding-top: 0px;
+      }
+      .flashcard.active .flashcardDefinition {
+        margin: 0px auto 15px;
+        visibility: visible;
+      }
 
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link src="./style.css">
-        <title>Hm</title>
-    </head>
+      .flashcardTitle {
+        transition-duration: 1s;
+        font-size: 20px;
+        text-align: center;
+        text-decoration: underline;
+        padding-top: 35px;
+        margin: auto;
+      }
+      .flashcardDefinition {
+        transition-duration: 0.2s;
+        font-size: 20px;
+        text-align: center;
+        margin: 0px;
+        visibility: hidden;
+      }
+    </style>
+    <title>Hm</title>
+  </head>
 
-    <body>
-        <h1 class="header">Flashcards</h1>
-        <section class="mainSection">
-            <div>
-                <h3 id="cardAddedStatus">Create Your Flashcard</h3>
-                <form id="createItemForm">
-                    <label for="title">Title: </label>
-                    <input type="text" name="title" id="title" required />
-                    <label for="definition">Definition: </label>
-                    <input type="text" name="definition" id="definition" required />
-                    <button id="submitButton" onclick="createItem()">
+  <body onload="getAllCards()">
+    <h1 class="header">Flashcards</h1>
+    <!-- <button onclick="displayCards()">Display Cards</button> -->
+    <section class="mainSection">
+      <div id="formSection">
+        <h3 id="flashcardAddedStatus">
+          Create Your Flashcard
+          <button id="addNewCard" onclick="createFlashcard();">
+            Add Another
+          </button>
+        </h3>
+        <form id="createFlashcardForm">
+          <label for="title">Title: </label>
+          <input type="text" name="title" id="title" required />
+          <label for="definition">Definition: </label>
+          <input type="text" name="definition" id="definition" required />
+          <button id="submitButton" onclick="createFlashcard()">
+            Add Card
+          </button>
+        </form>
+      </div>
+      <div id="flashcardSection">
+        <!-- <div id="flashcard" class="flashcard" onclick="flipFlashcard()">
+          <p id="flashcardTitle" class="flashcardTitle"></p>
+          <p id="flashcardDefinition" class="flashcardDefinition"></p> -->
+        </div>
+      </div>
+    </section>
+    <script>
+      const createFlashcardForm = document.getElementById(
+        "createFlashcardForm"
+      );
+      const flashcardAddedStatus = document.getElementById(
+        "flashcardAddedStatus"
+      );
+      const flashcardSection = document.getElementById("flashcardSection");
+      const flashcard = document.getElementById("flashcard");
+      const addNewCard = document.getElementById("addNewCard");
 
-                        Add Card
-                    </button>
-                </form>
-            </div>
-            <div class="flashcardContainer">
-                <div id="flashcard" onclick="flipFlashcard()">
-                    <p id="flashcardTitle">Mississippi</p>
-                    <p id="flashcardDefinition">Defintion of the flashcard will be here</p>
-                </div>
-            </div>
-        </section>
-        <script>
-            const createItemForm = document.getElementById("createItemForm");
-            const cardAddedStatus = document.getElementById("cardAddedStatus");
-            const flashcard = document.getElementById("flashcard");
-            const flashcardTitle = document.getElementById("flashcardTitle");
-            const flashcardDefinition = document.getElementById("flashcardDefinition");
+      var dbData = [];
 
-            var dbData = [];
-            // const submissionResult = document.getElementById("submissionResult");
-            function hideForm() {
-                createItemForm.style.visibility = "hidden";
-                cardAddedStatus.style.width = "max-content";
-                cardAddedStatus.style.color = "blue";
-                cardAddedStatus.style.marginRight = "-100px";
-                cardAddedStatus.innerHTML = "Your Card Was Successfully Added!";
-            }
-            async function createItem() {
-                try {
-                    event.preventDefault()
-                    const response = await fetch("v1/item", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded",
-                        },
-                        body: JSON.stringify({
-                            title: document.getElementById("title").value,
-                            definition: document.getElementById("definition").value,
-                        }),
-                    });
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    } else {
-                        hideForm()
-                        // createItemForm.style.display = "none";
-                        // submissionResult.style.visibility = "visible";
-                    }
-                } catch (error) {
-                    console.error("Error Fetching Data:", error);
-                }
-            }
-            async function getAllItems() {
+      // const existingCards = dbData.map(card => card.title)
+      // var amountOfData = 0;
 
-                try {
-                    const response = await fetch("v1/items", {
-                        method: "GET",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                    });
+      function hideForm() {
+        createFlashcardForm.style.visibility = "hidden";
+        flashcardAddedStatus.innerHTML = "Your Card Was Successfully Added!";
+        addNewCard.style.visibility = "visible";
+      }
 
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
+      function flipFlashcard(event) {
+        const selectedCard = event.currentTarget;
+        if (selectedCard.classList.contains("active")) {
+          selectedCard.classList.remove("active");
+        } else {
+          selectedCard.classList.add("active");
+        }
+      }
 
-                    dbData = await response.json();
-                    amountOfData = data.length
-                } catch (error) {
-                    console.error("Error fetching data:", error);
-                    submissionResult.innerHTML = "Opps! Something Went Wrong!";
-                    submissionResult.style.visibility = "visible";
-                }
-            }
+      async function createFlashcard() {
+        var title = CapitalizeEachWord(document.getElementById("title").value);
+        var definition = CapitalizeEachWord(
+          document.getElementById("definition").value
+        );
 
-        </script>
-    </body>
+        try {
+          event.preventDefault();
+          const response = await fetch("v1/api/flashcards/new", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: JSON.stringify({
+              title: title,
+              definition: definition,
+            }),
+          });
+          if (!response.ok) {
+            flashcardAddedStatus.innerHTML = "Oops! Sometime went wrong!";
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          } else {
+            hideForm();
+            getAllCards();
+          }
+        } catch (error) {
+          console.error("Error Fetching Data:", error);
+        }
+      }
 
+      async function getAllCards() {
+        try {
+          const response = await fetch("v1/api/flashcards", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          dbData = await response.json();
+          amountOfData = dbData.length;
+          displayCards(dbData, amountOfData);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+          flashcardAddedStatus.innerHTML = "Opps! Something Went Wrong!";
+          flashcardAddedStatus.style.visibility = "visible";
+        }
+      }
+
+      function displayCards(data, amount) {
+        const existingCards = dbData.map(card => card.title)
+        for (i = 0; i < amount; i++) {
+          // if(!existingCards.includes(data[i].title)){
+            if(data[i].title == ){
+            console.log("NEW")
+            var newCard = document.createElement("div");
+            newCard.classList.add("flashcard");
+
+            var cardTitle = document.createElement("p");
+            cardTitle.classList.add("flashcardTitle");
+            cardTitle.innerText = data[i].title;
+
+            var cardDefinition = document.createElement("p");
+            cardDefinition.classList.add("flashcardDefinition");
+            cardDefinition.innerText = data[i].definition;
+
+            newCard.addEventListener("click", flipFlashcard);
+            newCard.appendChild(cardTitle);
+            newCard.appendChild(cardDefinition);
+            flashcardSection.appendChild(newCard);
+          } else {
+            console.log("OLD")
+          }
+        }
+      }
+
+      function CapitalizeEachWord(string) {
+        const newString = string.split(" ");
+        const capString = [];
+        for (const i in newString) {
+          capString.push(
+            newString[i].charAt(0).toUpperCase() +
+              newString[i].toLowerCase().slice(1)
+          );
+        }
+        return capString.join(" ");
+      }
+    </script>
+  </body>
 </html>
 
 <!-- <!DOCTYPE html>

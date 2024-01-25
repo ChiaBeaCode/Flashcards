@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/ChiaBeaCode/GoWebServer/models"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -17,12 +18,14 @@ import (
 )
 
 // Model
-type TempModel struct {
-	ID primitive.ObjectID `bson:"_id,omitempty"`
-	// ID primitive.ObjectID `json:"_id,omitempty" bson:"_id, omitempty"`
-	Title      string `json:"title,omitempty"`
-	Definition string `json:"definition,omitempty"`
-}
+//
+//	type CardModel struct {
+//		ID primitive.ObjectID `bson:"_id,omitempty"`
+//		// ID primitive.ObjectID `json:"_id,omitempty" bson:"_id, omitempty"`
+//		Title      string `json:"title,omitempty"`
+//		Definition string `json:"definition,omitempty"`
+//	}
+// var cardModel models.CardModel
 
 // Stating collection type
 var collection *mongo.Collection
@@ -30,10 +33,10 @@ var collection *mongo.Collection
 // Connecting to MongoClient
 func init() {
 	godotenv.Load(".env")
-	URI := os.Getenv("DATABASE_URI")
+	DATABASE_URI := os.Getenv("DATABASE_URI")
 	DATABASE := os.Getenv("DATABASE")
 	COLLECTION := os.Getenv("COLLECTION")
-	clientOptions := options.Client().ApplyURI(URI)
+	clientOptions := options.Client().ApplyURI(DATABASE_URI)
 
 	//TODO() for when your not sure
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
@@ -48,29 +51,37 @@ func init() {
 	fmt.Println("<<<<Connection instance is ready>>>>")
 
 	//>>>>>>>>>>>>>>>>>>>>>>>>>
-	// res, err := collection.InsertOne(context.Background(), bson.M{"hello": "world"})
-	// if err != nil { return  }
-	// id := res.InsertedID
-	// fmt.Printf("idk=>>> %v", id)
-
 }
 
 // TODO: Move helpers to separate file
 // Lowercase: it's a helper method and we are not exporting it
-func createOneItem(item TempModel) {
-	fmt.Println("2")
-	res, err := collection.InsertOne(context.Background(), item)
-	if err != nil {
-		fmt.Println("Error Occurred When Adding Item =>>>>", err)
-		log.Fatal(err)
+func createOneCard(card models.CardModel) {
+	if err := findCard(card); err != nil {
+		res, err := collection.InsertOne(context.Background(), card)
+		if err != nil {
+			fmt.Println("Error Occurred When Adding Card =>>>>", err)
+			log.Fatal(err)
+		}
+		fmt.Println("\n\nCard Successfully Added With Error =>>>> ", res.InsertedID)
+		fmt.Println("\n\nError=>>>> ", err)
 	}
-	fmt.Println("\nItem Successfully Added With ID =>>>> ", res.InsertedID)
 }
 
-func updateOneItem(itemId string) {
-	id, err := primitive.ObjectIDFromHex(itemId)
+func findCard(card models.CardModel) error {
+	fmt.Println("\n\nWhat Appeared: ", card)
+	filter := bson.M{"title": card.Title}
+	fmt.Println("\n\nFiltered: ", filter)
+	var newRes bson.M
+	res := collection.FindOne(context.Background(), filter).Decode(&newRes)
+	fmt.Println("\n\n\n Found it! ", res == nil)
+	return res
+
+}
+
+func updateOneCard(cardId string) {
+	id, err := primitive.ObjectIDFromHex(cardId)
 	if err != nil {
-		fmt.Println("Error Occurred When Updating Item =>>>> ", err)
+		fmt.Println("Error Occurred When Updating Card =>>>> ", err)
 		log.Fatal(err)
 	}
 	filter := bson.M{"_id": id}
@@ -78,21 +89,20 @@ func updateOneItem(itemId string) {
 
 	res, err := collection.UpdateOne(context.Background(), filter, update)
 	if err != nil {
-		fmt.Println("Error Occurred Trying To Add Item To Collection")
+		fmt.Println("Error Occurred Trying To Add Card To Collection")
 		log.Fatal(err)
 	}
 	fmt.Println("\nUpdate Completed! =>>>>", res)
 	fmt.Println("\nres.ModifiedCount =>>>>", res.ModifiedCount)
 }
 
-// func deleteOneItem(itemId string ){
+// func deleteOneCard(cardId string ){
 // 	id, err := primitive.ObjectIDFromHex(itemId)
 // 	if err != nil{
 // 		fmt.Println("Error Occurred in DELETE Item Id section =>>>> ", err)
 // 		log.Fatal(err)
 // 	}
 // 	filter := bson.M{"_id": id}
-
 // 	res, err := collection.DeleteOne(context.TODO(), filter)
 // 	if err != nil{
 // 		fmt.Println("Error occurred after DELETE COLLECTION")
@@ -111,11 +121,11 @@ func updateOneItem(itemId string) {
 // 	fmt.Println("Modified DELETE COUNT", res.DeletedCount)
 // }
 
-func getAllItems() []bson.M {
+func getAllCards() []bson.M {
 	//Cursor are pointers to the documents in the collection
 	cursor, err := collection.Find(context.Background(), bson.M{})
 	if err != nil {
-		fmt.Println("Error Occurred When Gathering All Items =>>>> ", err)
+		fmt.Println("Error Occurred When Gathering All Cards =>>>> ", err)
 		log.Fatal(err)
 	}
 	defer func() {
@@ -123,63 +133,50 @@ func getAllItems() []bson.M {
 		fmt.Println("<<<<Cursor is closed>>>>")
 	}()
 
-	var items []bson.M
+	var cards []bson.M
 	//Next allows us to loop through the cursor, if there is a next value
 	//"While true"
 	for cursor.Next(context.Background()) {
-		var item bson.M
-		err := cursor.Decode(&item)
+		var card bson.M
+		err := cursor.Decode(&card)
 		if err != nil {
-			fmt.Println("Error Occurred When Gathering All Items =>>>> ", err)
+			fmt.Println("Error Occurred When Gathering All Cards =>>>> ", err)
 			log.Fatal(err)
 		}
-		fmt.Printf("Results =>>>> %v\n", item)
-		items = append(items, item)
+		fmt.Printf("Results =>>>> %v\n", card)
+		cards = append(cards, card)
 	}
 	if err != nil {
 		fmt.Println("Error occurred after loop FIND ALL DATABASE =>>>> ", err)
 		log.Fatal(err)
 	}
-	fmt.Printf("ITEMS, %v\n", items)
-	return items
+	fmt.Printf("CARDS, %v\n", cards)
+	return cards
 }
 
 // Exported functions
-func GetAllItems(w http.ResponseWriter, r *http.Request) {
+func GetAllCards(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	allItems := getAllItems()
-	fmt.Println("Everything:", allItems)
-	json.NewEncoder(w).Encode(allItems)
+	allCards := getAllCards()
+	fmt.Println("Everything:", allCards)
+	json.NewEncoder(w).Encode(allCards)
 }
 
-func CreateOneItem(w http.ResponseWriter, r *http.Request) {
+func CreateOneCard(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("1")
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Allow-Control-Allow-Methods", "POST")
-	var item TempModel
-	/*
-		<<<<If you are submitting data through form>>>>
-		if err := r.ParseForm(); err != nil {
-			fmt.Println("Error while parsing Create Item form")
-			log.Fatal(err)
-		}
-		title := r.FormValue("title")
-		definition := r.FormValue("definition")
-		item = TempModel{
-			Title:     title,
-			Definition: definition,
-		}
-	*/
-	json.NewDecoder(r.Body).Decode(&item)
+	w.Header().Set("Access-Control-Allow-Methods", "POST")
+	var card models.CardModel
+	json.NewDecoder(r.Body).Decode(&card)
 	/*
 		Not needed for when parsing form, but when dealing with json, for ex. APIs
-		json.NewDecoder(r.Body).Decode(&item)
-		json.NewEncoder(w).Encode(item)
+		json.NewDecoder(r.Body).Decode(&card)
+		json.NewEncoder(w).Encode(card)
 	*/
-	createOneItem(item)
+	createOneCard(card)
 }
 
-func UpdateOneItem(w http.ResponseWriter, r *http.Request) {
+func UpdateOneCard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Allow-Control-Allow-Methods", "POST")
 	if err := r.ParseForm(); err != nil {
@@ -187,6 +184,6 @@ func UpdateOneItem(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	id := r.FormValue("id")
-	updateOneItem(id)
+	updateOneCard(id)
 	json.NewEncoder(w).Encode(id)
 }
