@@ -6,9 +6,10 @@ Each flashcard will have a title and defintion that the user will input and save
 - Go
 - MongoDB
 - JavaScript
+- Docker
 - HTML/CSS
 ## Ongoing plans:
-- Dockerize
+- ~~Dockerize~~
 - Randomize cards
 - Allow user to delete and edit cards
 - Create categories for specific flashcard topics
