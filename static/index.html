@@ -52,7 +52,7 @@
         padding: 2px 12px;
       }
       #submitButton,
-      #addNewCard {
+      #addNewCardBtn {
         width: 120px;
         padding: 4px;
         margin: 8px auto;
@@ -62,7 +62,7 @@
         font-size: 16px;
         cursor: pointer;
       }
-      #addNewCard {
+      #addNewCardBtn {
         visibility: hidden;
       }
       #flashcardSection {
@@ -71,6 +71,8 @@
         /* border: 2px solid blue; */
         margin: 0px auto;
         max-width: 70%;
+        max-height: 80vh ;
+        overflow: scroll;
       }
       .flashcard {
         display: flex;
@@ -109,17 +111,16 @@
         visibility: hidden;
       }
     </style>
-    <title>Hm</title>
+    <title>Flashcards</title>
   </head>
 
   <body onload="getAllCards()">
     <h1 class="header">Flashcards</h1>
-    <!-- <button onclick="displayCards()">Display Cards</button> -->
     <section class="mainSection">
       <div id="formSection">
         <h3 id="flashcardAddedStatus">
           Create Your Flashcard
-          <button id="addNewCard" onclick="createFlashcard();">
+          <button id="addNewCardBtn" onclick="hideForm(true);">
             Add Another
           </button>
         </h3>
@@ -128,15 +129,12 @@
           <input type="text" name="title" id="title" required />
           <label for="definition">Definition: </label>
           <input type="text" name="definition" id="definition" required />
-          <button id="submitButton" onclick="createFlashcard()">
+          <button id="submitButton" onclick="createFlashcard(); reset(); ">
             Add Card
           </button>
         </form>
       </div>
       <div id="flashcardSection">
-        <!-- <div id="flashcard" class="flashcard" onclick="flipFlashcard()">
-          <p id="flashcardTitle" class="flashcardTitle"></p>
-          <p id="flashcardDefinition" class="flashcardDefinition"></p> -->
         </div>
       </div>
     </section>
@@ -149,31 +147,17 @@
       );
       const flashcardSection = document.getElementById("flashcardSection");
       const flashcard = document.getElementById("flashcard");
-      const addNewCard = document.getElementById("addNewCard");
+      const addNewCardBtn = document.getElementById("addNewCardBtn");
 
       var dbData = [];
+      var amountOfData = 0
+      const existingCards = dbData.map(card => card.title)
 
-      // const existingCards = dbData.map(card => card.title)
-      // var amountOfData = 0;
 
-      function hideForm() {
-        createFlashcardForm.style.visibility = "hidden";
-        flashcardAddedStatus.innerHTML = "Your Card Was Successfully Added!";
-        addNewCard.style.visibility = "visible";
-      }
-
-      function flipFlashcard(event) {
-        const selectedCard = event.currentTarget;
-        if (selectedCard.classList.contains("active")) {
-          selectedCard.classList.remove("active");
-        } else {
-          selectedCard.classList.add("active");
-        }
-      }
-
+      // <<<< API Calls >>>>
       async function createFlashcard() {
-        var title = CapitalizeEachWord(document.getElementById("title").value);
-        var definition = CapitalizeEachWord(
+        var title = capitalizeEachWord(document.getElementById("title").value);
+        var definition = capitalizeEachWord(
           document.getElementById("definition").value
         );
 
@@ -193,14 +177,18 @@
             flashcardAddedStatus.innerHTML = "Oops! Sometime went wrong!";
             throw new Error(`HTTP error! Status: ${response.status}`);
           } else {
-            hideForm();
-            getAllCards();
+            hideForm(false);
+            // location.reload()
+            displayCards(dbData, amount);
+            createFlashcardForm.reset()
+            window.location.reload()
+
           }
+
         } catch (error) {
           console.error("Error Fetching Data:", error);
         }
       }
-
       async function getAllCards() {
         try {
           const response = await fetch("v1/api/flashcards", {
@@ -222,13 +210,24 @@
           flashcardAddedStatus.style.visibility = "visible";
         }
       }
+      
+
+      // <<<< UI Effects >>>>
+      function hideForm(hideShow) {
+        if(hideShow){
+          createFlashcardForm.style.visibility = "hidden";
+          flashcardAddedStatus.innerHTML = "Your Card Was Successfully Added!";
+          addNewCardBtn.style.visibility = "visible";
+        } else {
+          createFlashcardForm.style.visibility = "visible";
+          flashcardAddedStatus.innerHTML = "Create Your Flashcard";
+          addNewCardBtn.style.visibility = "hidden";
+        }
+      }
 
       function displayCards(data, amount) {
-        const existingCards = dbData.map(card => card.title)
         for (i = 0; i < amount; i++) {
-          // if(!existingCards.includes(data[i].title)){
-            if(data[i].title == ){
-            console.log("NEW")
+          if(!existingCards.includes(data[i].title)){
             var newCard = document.createElement("div");
             newCard.classList.add("flashcard");
 
@@ -244,13 +243,22 @@
             newCard.appendChild(cardTitle);
             newCard.appendChild(cardDefinition);
             flashcardSection.appendChild(newCard);
-          } else {
-            console.log("OLD")
-          }
+          } 
         }
       }
 
-      function CapitalizeEachWord(string) {
+      function flipFlashcard(event) {
+        const selectedCard = event.currentTarget;
+        if (selectedCard.classList.contains("active")) {
+          selectedCard.classList.remove("active");
+        } else {
+          selectedCard.classList.add("active");
+        }
+      }
+
+
+      // <<<< Data Cleaning Functions >>>>
+      function capitalizeEachWord(string) {
         const newString = string.split(" ");
         const capString = [];
         for (const i in newString) {
