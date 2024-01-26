@@ -5,24 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
       body {
+        /* background: linear-gradient(217deg, #f2f2f2, cadetblue); */
         background-color: #c4d8c4;
         font-family: "Courier New", Courier, monospace;
         cursor: default;
+        margin: 0px
       }
       .header {
-        border: 2px solid red;
+        background-color: cadetblue;
         text-align: center;
-        margin: auto auto 50px;
+        margin: 0px auto 50px;
+        padding: 15px 0px;
+        text-shadow: white 5px 0 7px;
+        box-shadow: 0px 5px 5px gray;
       }
       .mainSection {
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
-        /* border: 2px solid purple; */
         padding: 0px 50px;
       }
       #formSection {
         max-width: 30%;
+        margin: 0px auto;
       }
       #flashcardAddedStatus {
         background-color: cadetblue;
@@ -36,8 +41,10 @@
         flex-direction: column;
         justify-content: space-between;
         border: 4px solid cadetblue;
+        background-color: #e7c8a0;
         padding: 15px;
         max-width: 272px;
+        margin: auto auto 10px;
       }
       label {
         font-size: 18px;
@@ -51,8 +58,7 @@
         margin: 8px 0px;
         padding: 2px 12px;
       }
-      #submitButton,
-      #addNewCardBtn {
+      #submitButton{
         width: 120px;
         padding: 4px;
         margin: 8px auto;
@@ -62,17 +68,15 @@
         font-size: 16px;
         cursor: pointer;
       }
-      #addNewCardBtn {
-        visibility: hidden;
-      }
+
       #flashcardSection {
         display: flex;
         flex-wrap: wrap;
-        /* border: 2px solid blue; */
         margin: 0px auto;
         max-width: 70%;
         max-height: 80vh ;
         overflow: scroll;
+        /* ::-webkit-scrollbar-track */
       }
       .flashcard {
         display: flex;
@@ -100,7 +104,7 @@
         font-size: 20px;
         text-align: center;
         text-decoration: underline;
-        padding-top: 35px;
+        /* padding-top: 35px; */
         margin: auto;
       }
       .flashcardDefinition {
@@ -109,6 +113,15 @@
         text-align: center;
         margin: 0px;
         visibility: hidden;
+      }
+
+      @media (max-width: 730px) {
+        .mainSection{
+          flex-direction: column;
+        }
+        #formSection, #flashcardSection{
+          max-width: fit-content;
+        }
       }
     </style>
     <title>Flashcards</title>
@@ -120,12 +133,9 @@
       <div id="formSection">
         <h3 id="flashcardAddedStatus">
           Create Your Flashcard
-          <button id="addNewCardBtn" onclick="hideForm(true);">
-            Add Another
-          </button>
         </h3>
         <form id="createFlashcardForm">
-          <label for="title">Title: </label>
+          <label for="title">Word: </label>
           <input type="text" name="title" id="title" required />
           <label for="definition">Definition: </label>
           <input type="text" name="definition" id="definition" required />
@@ -147,7 +157,7 @@
       );
       const flashcardSection = document.getElementById("flashcardSection");
       const flashcard = document.getElementById("flashcard");
-      const addNewCardBtn = document.getElementById("addNewCardBtn");
+
 
       var dbData = [];
       var amountOfData = 0
@@ -215,11 +225,9 @@
         if(hideShow){
           createFlashcardForm.style.visibility = "hidden";
           flashcardAddedStatus.innerHTML = "Your Card Was Successfully Added!";
-          addNewCardBtn.style.visibility = "visible";
         } else {
           createFlashcardForm.style.visibility = "visible";
           flashcardAddedStatus.innerHTML = "Create Your Flashcard";
-          addNewCardBtn.style.visibility = "hidden";
         }
       }
 
@@ -253,7 +261,6 @@
           selectedCard.classList.add("active");
         }
       }
-
 
       // <<<< Data Cleaning Functions >>>>
       function capitalizeEachWord(string) {
